@@ -96,3 +96,15 @@ pub fn main() -> Result<(), String> {
 
     Ok(())
 }
+
+// first deal with actually displaying words to the window properly
+
+// create data structure abstraction to store the file contents in
+
+// then maybe add a cursor??
+
+// then we can consider vertical and horizontal scrolling
+
+// then we consider editing the actual file
+
+//
