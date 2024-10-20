@@ -4,18 +4,20 @@ use std::ptr;
 struct Node<T> {
     elem: T,
     next: *mut Node<T>,
-    prev: *mut Node<T>
+    prev: *mut Node<T>,
 }
 
 struct List<T> {
     head: *mut Node<T>,
-    tail: *mut Node<T>
+    tail: *mut Node<T>,
 }
 
 impl<T> List<T> {
-
     pub fn new() -> Self {
-        List { head: ptr::null_mut(), tail: ptr::null_mut() }
+        List {
+            head: ptr::null_mut(),
+            tail: ptr::null_mut(),
+        }
     }
 
     fn push_back(&mut self, element: T) {
@@ -25,7 +27,7 @@ impl<T> List<T> {
                 next: ptr::null_mut(),
                 prev: ptr::null_mut(),
             }));
-            
+
             if !self.tail.is_null() {
                 (*(self.tail)).next = new_node;
                 (*new_node).prev = self.tail;
@@ -36,7 +38,7 @@ impl<T> List<T> {
         }
     }
 
-    fn pop_back(&mut self) -> Option<T> { 
+    fn pop_back(&mut self) -> Option<T> {
         unsafe {
             if self.tail.is_null() {
                 return None;
@@ -50,7 +52,6 @@ impl<T> List<T> {
             self.tail = popped_node.prev;
             return Some(popped_node.elem);
         }
-        
     }
 
     fn push_front(&mut self, element: T) {
@@ -60,7 +61,7 @@ impl<T> List<T> {
                 next: ptr::null_mut(),
                 prev: ptr::null_mut(),
             }));
-            
+
             if !self.head.is_null() {
                 (*(self.head)).prev = new_node;
                 (*new_node).next = self.head;
@@ -71,7 +72,7 @@ impl<T> List<T> {
         }
     }
 
-    fn pop_front(&mut self) -> Option<T> { 
+    fn pop_front(&mut self) -> Option<T> {
         unsafe {
             if self.head.is_null() {
                 return None;
@@ -90,17 +91,16 @@ impl<T> List<T> {
     fn peek_front(&self) -> Option<&T> {
         unsafe {
             if !self.head.is_null() {
-                return Some(&(*self.head).elem)
+                return Some(&(*self.head).elem);
             }
             None
         }
-        
     }
 
     fn peek_back(&self) -> Option<&T> {
         unsafe {
             if !self.tail.is_null() {
-                return Some(&(*self.tail).elem)
+                return Some(&(*self.tail).elem);
             }
             None
         }
@@ -112,16 +112,21 @@ impl<T> List<T> {
 
     fn iter(&self) -> Iter<T> {
         unsafe {
-            Iter { next: Some(&*self.head ), next_back: Some(&*self.tail)}
+            Iter {
+                next: Some(&*self.head),
+                next_back: Some(&*self.tail),
+            }
         }
     }
 
     fn iter_mut(&mut self) -> IterMut<T> {
         unsafe {
-            IterMut { next: Some(&mut *self.head ), next_back: Some(&mut *self.tail)}
+            IterMut {
+                next: Some(&mut *self.head),
+                next_back: Some(&mut *self.tail),
+            }
         }
     }
-    
 }
 
 pub struct IntoIter<T>(List<T>);
@@ -137,9 +142,8 @@ pub struct IterMut<'a, T> {
 }
 
 impl<T> Iterator for IntoIter<T> {
-
     type Item = T;
-    
+
     fn next(&mut self) -> Option<Self::Item> {
         self.0.pop_front()
     }
@@ -151,7 +155,10 @@ impl<T> DoubleEndedIterator for IntoIter<T> {
     }
 }
 
-impl<'a,T> Iterator for Iter<'a, T> where T: PartialEq {
+impl<'a, T> Iterator for Iter<'a, T>
+where
+    T: PartialEq,
+{
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -162,13 +169,16 @@ impl<'a,T> Iterator for Iter<'a, T> where T: PartialEq {
             } else {
                 self.next = unsafe { node.next.as_ref() };
             }
-            return Some(&node.elem)
+            return Some(&node.elem);
         }
         None
     }
 }
 
-impl<'a, T> DoubleEndedIterator for Iter<'a, T> where T: PartialEq {
+impl<'a, T> DoubleEndedIterator for Iter<'a, T>
+where
+    T: PartialEq,
+{
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some(node) = self.next_back {
             if self.next == self.next_back {
@@ -177,13 +187,16 @@ impl<'a, T> DoubleEndedIterator for Iter<'a, T> where T: PartialEq {
             } else {
                 self.next_back = unsafe { node.prev.as_ref() };
             }
-            return Some(&node.elem)
+            return Some(&node.elem);
         }
         None
     }
 }
 
-impl<'a, T> Iterator for IterMut<'a, T> where T: PartialEq {
+impl<'a, T> Iterator for IterMut<'a, T>
+where
+    T: PartialEq,
+{
     type Item = &'a mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -194,14 +207,16 @@ impl<'a, T> Iterator for IterMut<'a, T> where T: PartialEq {
             } else {
                 self.next = unsafe { node.next.as_mut() };
             }
-            return Some(&mut node.elem)
+            return Some(&mut node.elem);
         }
         None
     }
 }
 
-impl<'a, T> DoubleEndedIterator for IterMut<'a, T> where T: PartialEq {
-
+impl<'a, T> DoubleEndedIterator for IterMut<'a, T>
+where
+    T: PartialEq,
+{
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some(node) = self.next_back.take() {
             if self.next == self.next_back {
@@ -210,7 +225,7 @@ impl<'a, T> DoubleEndedIterator for IterMut<'a, T> where T: PartialEq {
             } else {
                 self.next_back = unsafe { node.prev.as_mut() };
             }
-            return Some(&mut node.elem)
+            return Some(&mut node.elem);
         }
         None
     }
@@ -298,7 +313,9 @@ mod test {
     #[test]
     fn into_iter() {
         let mut list = List::new();
-        list.push_back(1); list.push_back(2); list.push_back(3);
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
 
         let mut iter = list.into_iter();
         assert_eq!(iter.next(), Some(1));
@@ -311,7 +328,9 @@ mod test {
     #[test]
     fn iter() {
         let mut list = List::new();
-        list.push_back(1); list.push_back(2); list.push_back(3);
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
 
         let mut iter = list.iter();
         assert_eq!(iter.next(), Some(1).as_ref());
@@ -324,7 +343,9 @@ mod test {
     #[test]
     fn iter_mut() {
         let mut list = List::new();
-        list.push_back(1); list.push_back(2); list.push_back(3);
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
 
         let mut iter = list.iter_mut();
         assert_eq!(iter.next(), Some(1).as_mut());
@@ -333,5 +354,4 @@ mod test {
         assert_eq!(iter.next(), None);
         assert_eq!(iter.next_back(), None);
     }
-
 }
