@@ -1,4 +1,11 @@
-use sdl2::{pixels::Color, rect::Rect, render::Canvas, surface::{self, SurfaceRef}, video::Window, Sdl};
+use sdl2::{
+    pixels::Color,
+    rect::Rect,
+    render::Canvas,
+    surface::{self, SurfaceRef},
+    video::Window,
+    Sdl,
+};
 
 use crate::{atlas::Atlas, editor::Dimensions};
 
@@ -9,12 +16,12 @@ struct Position {
 }
 pub struct Screen {
     cursor_pos: Position,
+    old_cursor_pos: Position,
     canvas: Canvas<Window>,
     window_size: Dimensions,
 }
 
 impl Screen {
-
     pub fn new(sdl_context: &Sdl, dimensions: &Dimensions) -> Result<Screen, String> {
         let video_subsystem = sdl_context.video()?;
 
@@ -27,10 +34,21 @@ impl Screen {
         let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
-       Ok(Screen { cursor_pos: Position { x: 0, y: 0 }, canvas, window_size: Dimensions { height: dimensions.height, width: dimensions.width } })
+        Ok(Screen {
+            cursor_pos: Position { x: 0, y: 0 },
+            old_cursor_pos: Position { x: 0, y: 0 },
+            canvas,
+            window_size: Dimensions {
+                height: dimensions.height,
+                width: dimensions.width,
+            },
+        })
     }
 
-    pub fn draw_text<S>(&mut self, text: &str, surface: S, atlas: &Atlas) where S: AsRef<SurfaceRef> {
+    pub fn draw_text<S>(&mut self, text: &str, surface: S, atlas: &Atlas)
+    where
+        S: AsRef<SurfaceRef>,
+    {
         let texture_creator = self.canvas.texture_creator();
         let mut texture = texture_creator
             .create_texture_from_surface(surface)

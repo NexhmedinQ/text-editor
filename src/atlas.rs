@@ -37,7 +37,6 @@ impl Atlas {
                 .blended(Color::RGBA(255, 255, 255, 0))
                 .map_err(|e: sdl2::ttf::FontError| e.to_string())?;
 
-
             println!("{:?}", position);
             // check to make sure texture fits in the width
             if position.width() + position.x() as u32 >= FONT_TEXTURE_SIZE {

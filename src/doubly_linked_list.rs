@@ -7,7 +7,7 @@ struct Node<T> {
     prev: *mut Node<T>,
 }
 
-struct List<T> {
+pub struct List<T> {
     head: *mut Node<T>,
     tail: *mut Node<T>,
 }
@@ -20,7 +20,7 @@ impl<T> List<T> {
         }
     }
 
-    fn push_back(&mut self, element: T) {
+    pub fn push_back(&mut self, element: T) {
         unsafe {
             let new_node = Box::into_raw(Box::new(Node {
                 elem: element,
@@ -38,7 +38,7 @@ impl<T> List<T> {
         }
     }
 
-    fn pop_back(&mut self) -> Option<T> {
+    pub fn pop_back(&mut self) -> Option<T> {
         unsafe {
             if self.tail.is_null() {
                 return None;
@@ -54,7 +54,7 @@ impl<T> List<T> {
         }
     }
 
-    fn push_front(&mut self, element: T) {
+    pub fn push_front(&mut self, element: T) {
         unsafe {
             let new_node = Box::into_raw(Box::new(Node {
                 elem: element,
@@ -72,7 +72,7 @@ impl<T> List<T> {
         }
     }
 
-    fn pop_front(&mut self) -> Option<T> {
+    pub fn pop_front(&mut self) -> Option<T> {
         unsafe {
             if self.head.is_null() {
                 return None;
@@ -88,7 +88,7 @@ impl<T> List<T> {
         }
     }
 
-    fn peek_front(&self) -> Option<&T> {
+    pub fn peek_front(&self) -> Option<&T> {
         unsafe {
             if !self.head.is_null() {
                 return Some(&(*self.head).elem);
@@ -97,7 +97,7 @@ impl<T> List<T> {
         }
     }
 
-    fn peek_back(&self) -> Option<&T> {
+    pub fn peek_back(&self) -> Option<&T> {
         unsafe {
             if !self.tail.is_null() {
                 return Some(&(*self.tail).elem);
@@ -106,11 +106,11 @@ impl<T> List<T> {
         }
     }
 
-    fn into_iter(self) -> IntoIter<T> {
+    pub fn into_iter(self) -> IntoIter<T> {
         IntoIter(self)
     }
 
-    fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<T> {
         unsafe {
             Iter {
                 next: Some(&*self.head),
@@ -119,7 +119,7 @@ impl<T> List<T> {
         }
     }
 
-    fn iter_mut(&mut self) -> IterMut<T> {
+    pub fn iter_mut(&mut self) -> IterMut<T> {
         unsafe {
             IterMut {
                 next: Some(&mut *self.head),
