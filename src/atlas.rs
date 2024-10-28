@@ -58,6 +58,10 @@ impl Atlas {
     pub fn get_char(&self, character: &char) -> Rect {
         return self.glyphs[*character as usize];
     }
+
+    pub fn get_font_size(&self) -> &Dimensions {
+        &self.font_size
+    }
     // fn create_glyph_cache(font_path: &str) -> Vec<Rect> {
     //     Vec::new()
     // }

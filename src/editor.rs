@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use sdl2::{
     event::Event,
     keyboard::Keycode,
@@ -6,9 +8,9 @@ use sdl2::{
     Sdl,
 };
 
-use crate::{atlas::Atlas, screen::Screen};
+use crate::{atlas::Atlas, screen::Screen, text_buffer::Buffer};
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Dimensions {
     pub height: u32,
     pub width: u32,
@@ -19,10 +21,11 @@ pub struct Editor<'a> {
     screen: Screen,
     sdl_context: Sdl,
     surface: Surface<'a>,
+    text_buffer: Buffer
 }
 
 impl<'a> Editor<'a> {
-    pub fn new(dimensions: Dimensions) -> Result<Editor<'a>, String> {
+    pub fn new<P: AsRef<Path>>(dimensions: Dimensions, file_path: P) -> Result<Editor<'a>, String> {
         let sdl_context = sdl2::init()?;
 
         let masks = PixelFormatEnum::RGB24.into_masks().unwrap();
@@ -34,12 +37,13 @@ impl<'a> Editor<'a> {
             atlas: Atlas::new(16, &mut surface)?,
             screen,
             surface,
+            text_buffer: Buffer::open(file_path).unwrap()
         });
     }
 
     pub fn start(&mut self) -> Result<(), String> {
         self.screen.draw_text(
-            "Let us try to render text onto window",
+            &mut self.text_buffer,
             self.surface.as_ref(),
             &self.atlas,
         );
@@ -87,6 +91,7 @@ impl<'a> Editor<'a> {
                     }
                 }
             }
+            self.screen.render();
         }
         Ok(())
     }

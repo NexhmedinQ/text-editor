@@ -49,7 +49,7 @@ impl Buffer {
             .spans
             .iter()
             .take_while(|span| {
-                if newline_count + span.newlines < line_start - 1 {
+                if newline_count + span.newlines < line_start {
                     newline_count += span.newlines;
                     return true;
                 }
@@ -64,7 +64,7 @@ impl Buffer {
                 .map_err(|e| e.to_string())
                 .unwrap();
             let mut lines: Vec<String>;
-            if newline_count < line_start - 1 {
+            if newline_count < line_start {
                 lines = string
                     .split('\n')
                     .skip((line_start - 1 - newline_count).try_into().unwrap())
