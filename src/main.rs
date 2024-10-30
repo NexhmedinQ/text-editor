@@ -9,11 +9,13 @@ pub fn main() -> Result<(), String> {
     if args.len() != 2 {
         panic!("Usage: cargo run <filepath>")
     }
-    let mut editor = Editor::new(Dimensions {
-        height: HEIGHT,
-        width: WIDTH,
-    },
-args[1].clone())?;
+    let mut editor = Editor::new(
+        Dimensions {
+            height: HEIGHT,
+            width: WIDTH,
+        },
+        args[1].clone(),
+    )?;
     let _ = editor.start();
     Ok(())
 }

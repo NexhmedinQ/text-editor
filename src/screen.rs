@@ -1,11 +1,4 @@
-use sdl2::{
-    pixels::Color,
-    rect::Rect,
-    render::Canvas,
-    surface::SurfaceRef,
-    video::Window,
-    Sdl,
-};
+use sdl2::{pixels::Color, rect::Rect, render::Canvas, surface::SurfaceRef, video::Window, Sdl};
 
 use crate::{atlas::Atlas, editor::Dimensions, text_buffer::Buffer};
 
@@ -19,7 +12,7 @@ pub struct Screen {
     old_cursor_pos: Position,
     canvas: Canvas<Window>,
     window_size: Dimensions,
-    top_line: u32
+    top_line: u32,
 }
 
 impl Screen {
@@ -79,6 +72,26 @@ impl Screen {
             }
             dst.set_y(dst.y() + i32::try_from(char_size.height).unwrap());
         }
+    }
+
+    pub fn draw_cursor(&mut self, atlas: &Atlas) {
+        let font_size = atlas.get_font_size();
+        let mut width = 2;
+        if font_size.width >= 10 {
+            width = (font_size.width as f64 * 0.2).floor() as i32;
+            if width % 2 != 0 {
+                width -= 1;
+            }
+        }
+        println!("{}", width);
+        self.canvas
+            .draw_rect(Rect::new(
+                self.cursor_pos.x as i32 - (width / 2),
+                font_size.height as i32,
+                width as u32,
+                0,
+            ))
+            .unwrap();
     }
 
     pub fn render(&mut self) {

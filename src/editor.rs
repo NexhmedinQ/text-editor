@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, time::{Duration, Instant}};
 
 use sdl2::{
     event::Event,
@@ -21,7 +21,13 @@ pub struct Editor<'a> {
     screen: Screen,
     sdl_context: Sdl,
     surface: Surface<'a>,
-    text_buffer: Buffer
+    text_buffer: Buffer,
+}
+
+#[derive(PartialEq)]
+enum CursorState {
+    On,
+    Off
 }
 
 impl<'a> Editor<'a> {
@@ -37,17 +43,18 @@ impl<'a> Editor<'a> {
             atlas: Atlas::new(16, &mut surface)?,
             screen,
             surface,
-            text_buffer: Buffer::open(file_path).unwrap()
+            text_buffer: Buffer::open(file_path).unwrap(),
         });
     }
 
     pub fn start(&mut self) -> Result<(), String> {
-        self.screen.draw_text(
-            &mut self.text_buffer,
-            self.surface.as_ref(),
-            &self.atlas,
-        );
+        self.screen
+            .draw_text(&mut self.text_buffer, self.surface.as_ref(), &self.atlas);
         self.screen.render();
+
+        let mut cursor_state = CursorState::On;
+        let mut time_since_cursor_change = Instant::now();
+        
         let mut event_pump = self.sdl_context.event_pump()?;
 
         'running: loop {
@@ -81,7 +88,10 @@ impl<'a> Editor<'a> {
                                     Keycode::UP
                                     | Keycode::DOWN
                                     | Keycode::LEFT
-                                    | Keycode::RIGHT => println!("cursor position"),
+                                    | Keycode::RIGHT => {
+                                        Self::manage_cursor(&mut time_since_cursor_change, &mut cursor_state, true);
+                                        println!("cursor position");
+                                    },
                                     _ => println!("Other keycode"),
                                 }
                             }
@@ -91,8 +101,28 @@ impl<'a> Editor<'a> {
                     }
                 }
             }
+            if cursor_state == CursorState::On {
+                self.screen.draw_cursor(&self.atlas);
+            }
             self.screen.render();
         }
         Ok(())
+    }
+
+    fn manage_cursor(time_since_state_change: &mut Instant, cursor_state: &mut CursorState, refresh_on_state: bool) {
+        if refresh_on_state {
+            *time_since_state_change = Instant::now();
+            *cursor_state = CursorState::On;
+        }
+        let now = Instant::now();
+        if now.checked_duration_since(*time_since_state_change).unwrap() >= Duration::from_millis(600) && *cursor_state == CursorState::Off {
+            //turn on
+            *cursor_state = CursorState::On;
+            *time_since_state_change = Instant::now();
+        } else if now.checked_duration_since(*time_since_state_change).unwrap() >= Duration::from_millis(400) && *cursor_state == CursorState::On {
+            // turn off
+            *cursor_state = CursorState::Off;
+            *time_since_state_change = Instant::now();
+        }
     }
 }
