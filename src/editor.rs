@@ -1,4 +1,7 @@
-use std::{path::Path, time::{Duration, Instant}};
+use std::{
+    path::Path,
+    time::{Duration, Instant},
+};
 
 use sdl2::{
     event::Event,
@@ -27,7 +30,7 @@ pub struct Editor<'a> {
 #[derive(PartialEq)]
 enum CursorState {
     On,
-    Off
+    Off,
 }
 
 impl<'a> Editor<'a> {
@@ -48,16 +51,18 @@ impl<'a> Editor<'a> {
     }
 
     pub fn start(&mut self) -> Result<(), String> {
-        self.screen
-            .draw_text(&mut self.text_buffer, self.surface.as_ref(), &self.atlas);
-        self.screen.render();
-
         let mut cursor_state = CursorState::On;
         let mut time_since_cursor_change = Instant::now();
-        
+
         let mut event_pump = self.sdl_context.event_pump()?;
 
         'running: loop {
+            self.screen.colour();
+            self.screen.clear_screen();
+            Self::manage_cursor(&mut time_since_cursor_change, &mut cursor_state, false);
+            self.screen
+                .draw_text(&mut self.text_buffer, self.surface.as_ref(), &self.atlas);
+
             let ctrl_pressed = event_pump
                 .keyboard_state()
                 .pressed_scancodes()
@@ -89,9 +94,13 @@ impl<'a> Editor<'a> {
                                     | Keycode::DOWN
                                     | Keycode::LEFT
                                     | Keycode::RIGHT => {
-                                        Self::manage_cursor(&mut time_since_cursor_change, &mut cursor_state, true);
+                                        Self::manage_cursor(
+                                            &mut time_since_cursor_change,
+                                            &mut cursor_state,
+                                            true,
+                                        );
                                         println!("cursor position");
-                                    },
+                                    }
                                     _ => println!("Other keycode"),
                                 }
                             }
@@ -109,17 +118,31 @@ impl<'a> Editor<'a> {
         Ok(())
     }
 
-    fn manage_cursor(time_since_state_change: &mut Instant, cursor_state: &mut CursorState, refresh_on_state: bool) {
+    fn manage_cursor(
+        time_since_state_change: &mut Instant,
+        cursor_state: &mut CursorState,
+        refresh_on_state: bool,
+    ) {
         if refresh_on_state {
             *time_since_state_change = Instant::now();
             *cursor_state = CursorState::On;
         }
         let now = Instant::now();
-        if now.checked_duration_since(*time_since_state_change).unwrap() >= Duration::from_millis(600) && *cursor_state == CursorState::Off {
+        if now
+            .checked_duration_since(*time_since_state_change)
+            .unwrap()
+            >= Duration::from_millis(600)
+            && *cursor_state == CursorState::Off
+        {
             //turn on
             *cursor_state = CursorState::On;
             *time_since_state_change = Instant::now();
-        } else if now.checked_duration_since(*time_since_state_change).unwrap() >= Duration::from_millis(400) && *cursor_state == CursorState::On {
+        } else if now
+            .checked_duration_since(*time_since_state_change)
+            .unwrap()
+            >= Duration::from_millis(400)
+            && *cursor_state == CursorState::On
+        {
             // turn off
             *cursor_state = CursorState::Off;
             *time_since_state_change = Instant::now();

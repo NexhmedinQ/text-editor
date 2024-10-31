@@ -1,4 +1,4 @@
-use sdl2::{pixels::Color, rect::Rect, render::Canvas, surface::SurfaceRef, video::Window, Sdl};
+use sdl2::{pixels::{self, Color}, rect::Rect, render::Canvas, surface::SurfaceRef, video::Window, Sdl};
 
 use crate::{atlas::Atlas, editor::Dimensions, text_buffer::Buffer};
 
@@ -84,17 +84,26 @@ impl Screen {
             }
         }
         println!("{}", width);
+        self.canvas.set_draw_color(pixels::Color { r: 255, g: 255, b: 255, a: 0 });
         self.canvas
-            .draw_rect(Rect::new(
+            .fill_rect(Rect::new(
                 self.cursor_pos.x as i32 - (width / 2),
-                font_size.height as i32,
+                self.cursor_pos.y as i32,
                 width as u32,
-                0,
+                font_size.height,
             ))
             .unwrap();
     }
 
     pub fn render(&mut self) {
         self.canvas.present();
+    }
+
+    pub fn clear_screen(&mut self) {
+        self.canvas.clear();
+    }
+
+    pub fn colour(&mut self) {
+        self.canvas.set_draw_color(pixels::Color { r: 0, g: 0, b: 0, a: 0 });
     }
 }
