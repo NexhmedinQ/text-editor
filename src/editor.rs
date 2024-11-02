@@ -6,12 +6,12 @@ use std::{
 use sdl2::{
     event::Event,
     keyboard::Keycode,
-    pixels::{Color, PixelFormatEnum},
+    pixels::{self, Color, PixelFormatEnum},
     surface::Surface,
     Sdl,
 };
 
-use crate::{atlas::Atlas, screen::Screen, text_buffer::Buffer};
+use crate::{atlas::Atlas, screen::Screen, text_buffer::{self, Buffer}};
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Dimensions {
@@ -40,13 +40,14 @@ impl<'a> Editor<'a> {
         let masks = PixelFormatEnum::RGB24.into_masks().unwrap();
         let mut surface = Surface::from_pixelmasks(512, 512, &masks).unwrap();
         surface.set_color_key(true, Color::BLACK)?;
-        let screen = Screen::new(&sdl_context, &dimensions)?;
+        let text_buffer = Buffer::open(file_path).unwrap();
+        let screen = Screen::new(&sdl_context, &dimensions, &text_buffer)?;
         return Ok(Editor {
             sdl_context,
             atlas: Atlas::new(16, &mut surface)?,
             screen,
             surface,
-            text_buffer: Buffer::open(file_path).unwrap(),
+            text_buffer
         });
     }
 
@@ -57,7 +58,7 @@ impl<'a> Editor<'a> {
         let mut event_pump = self.sdl_context.event_pump()?;
 
         'running: loop {
-            self.screen.colour();
+            self.screen.colour(pixels::Color { r: 0, g: 0, b: 0, a: 0 });
             self.screen.clear_screen();
             Self::manage_cursor(&mut time_since_cursor_change, &mut cursor_state, false);
             self.screen
@@ -94,12 +95,12 @@ impl<'a> Editor<'a> {
                                     | Keycode::DOWN
                                     | Keycode::LEFT
                                     | Keycode::RIGHT => {
+                                        self.screen.cursor_move(key);
                                         Self::manage_cursor(
                                             &mut time_since_cursor_change,
                                             &mut cursor_state,
                                             true,
                                         );
-                                        println!("cursor position");
                                     }
                                     _ => println!("Other keycode"),
                                 }

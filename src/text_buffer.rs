@@ -6,7 +6,6 @@ use std::{
 
 #[derive(PartialEq)]
 struct Span {
-    //length: u32,
     newlines: u32,
     is_append: bool,
     start_index: usize,
@@ -41,7 +40,7 @@ impl Buffer {
         })
     }
 
-    pub fn get_lines(&self, line_start: u32, line_end: u32) -> impl Iterator<Item = String> {
+    pub fn get_lines(&self, line_start: u32, line_end: u32) -> Vec<String> {
         let mut newline_count: u32 = 0;
         let mut line_buf: Vec<String> = Vec::new();
 
@@ -88,7 +87,7 @@ impl Buffer {
                 break;
             }
         }
-        return line_buf.into_iter();
+        return line_buf;
     }
 
     fn num_newlines(buf: &[u8]) -> u32 {
@@ -106,4 +105,8 @@ impl Buffer {
             &self.original_text[span.start_index..=span.end_index]
         }
     }
+
+    pub fn redo(&mut self) {}
+
+    pub fn undo(&mut self) {}
 }
