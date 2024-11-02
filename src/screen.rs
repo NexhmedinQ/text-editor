@@ -1,4 +1,12 @@
-use sdl2::{pixels::{self, Color}, rect::Rect, render::Canvas, surface::SurfaceRef, keyboard::Keycode, video::Window, Sdl};
+use sdl2::{
+    keyboard::Keycode,
+    pixels::{self, Color},
+    rect::Rect,
+    render::Canvas,
+    surface::SurfaceRef,
+    video::Window,
+    Sdl,
+};
 
 use crate::{atlas::Atlas, editor::Dimensions, text_buffer::Buffer};
 
@@ -19,11 +27,15 @@ pub struct Screen {
     canvas: Canvas<Window>,
     window_size: Dimensions,
     top_line: u32,
-    line_buf: Box<Vec<String>>
+    line_buf: Box<Vec<String>>,
 }
 
 impl Screen {
-    pub fn new(sdl_context: &Sdl, dimensions: &Dimensions, text_buffer: & Buffer) -> Result<Screen, String> {
+    pub fn new(
+        sdl_context: &Sdl,
+        dimensions: &Dimensions,
+        text_buffer: &Buffer,
+    ) -> Result<Screen, String> {
         let video_subsystem = sdl_context.video()?;
 
         let window = video_subsystem
@@ -36,14 +48,18 @@ impl Screen {
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         Ok(Screen {
-            cursor: Cursor { cursor_pos: Position { x: 0, y: 0 }, old_cursor_pos: Position { x: 0, y: 0 }, line_num: 0 },
+            cursor: Cursor {
+                cursor_pos: Position { x: 0, y: 0 },
+                old_cursor_pos: Position { x: 0, y: 0 },
+                line_num: 0,
+            },
             canvas,
             top_line: 0,
             window_size: Dimensions {
                 height: dimensions.height,
                 width: dimensions.width,
             },
-            line_buf: Box::new(text_buffer.get_lines(0, 1))
+            line_buf: Box::new(text_buffer.get_lines(0, 1)),
         })
     }
 
@@ -93,7 +109,12 @@ impl Screen {
                 width -= 1;
             }
         }
-        self.canvas.set_draw_color(pixels::Color { r: 255, g: 255, b: 255, a: 0 });
+        self.canvas.set_draw_color(pixels::Color {
+            r: 255,
+            g: 255,
+            b: 255,
+            a: 0,
+        });
         self.canvas
             .fill_rect(Rect::new(
                 coordinate_cursor_x as i32 - (width / 2),
@@ -123,13 +144,16 @@ impl Screen {
                     self.cursor.cursor_pos.x -= 1;
                 } else if self.cursor.cursor_pos.y > 0 {
                     self.cursor.cursor_pos.y -= 1;
-                    self.cursor.cursor_pos.x = self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32;
+                    self.cursor.cursor_pos.x =
+                        self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32;
                     self.cursor.line_num -= 1;
                 }
                 self.cursor.old_cursor_pos = self.cursor.cursor_pos.clone();
-            },
+            }
             Keycode::RIGHT => {
-                if self.cursor.cursor_pos.x < self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32 {
+                if self.cursor.cursor_pos.x
+                    < self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32
+                {
                     self.cursor.cursor_pos.x += 1;
                 } else if self.cursor.cursor_pos.y < (self.line_buf.len() - 1) as u32 {
                     self.cursor.cursor_pos.y += 1;
@@ -137,30 +161,33 @@ impl Screen {
                     self.cursor.line_num += 1;
                 }
                 self.cursor.old_cursor_pos = self.cursor.cursor_pos.clone();
-            },
+            }
             Keycode::DOWN => {
                 if self.cursor.cursor_pos.y < (self.line_buf.len() - 1) as u32 {
                     self.cursor.cursor_pos.y += 1;
                     Self::set_cursor_x_on_vert_move(self);
                     self.cursor.line_num += 1;
                 }
-            },
+            }
             Keycode::UP => {
                 if self.cursor.cursor_pos.y > 0 {
                     self.cursor.cursor_pos.y -= 1;
                     Self::set_cursor_x_on_vert_move(self);
                     self.cursor.line_num -= 1;
                 }
-            },
-            _ => unreachable!("method is only called for when keycode is a direction")
+            }
+            _ => unreachable!("method is only called for when keycode is a direction"),
         }
     }
 
     fn set_cursor_x_on_vert_move(&mut self) {
-        if self.line_buf[self.cursor.cursor_pos.y as usize].len() >= self.cursor.old_cursor_pos.x as usize {
+        if self.line_buf[self.cursor.cursor_pos.y as usize].len()
+            >= self.cursor.old_cursor_pos.x as usize
+        {
             self.cursor.cursor_pos.x = self.cursor.old_cursor_pos.x;
         } else {
-            self.cursor.cursor_pos.x = self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32;
+            self.cursor.cursor_pos.x =
+                self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32;
         }
     }
 }

@@ -11,7 +11,11 @@ use sdl2::{
     Sdl,
 };
 
-use crate::{atlas::Atlas, screen::Screen, text_buffer::{self, Buffer}};
+use crate::{
+    atlas::Atlas,
+    screen::Screen,
+    text_buffer::{self, Buffer},
+};
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Dimensions {
@@ -47,7 +51,7 @@ impl<'a> Editor<'a> {
             atlas: Atlas::new(16, &mut surface)?,
             screen,
             surface,
-            text_buffer
+            text_buffer,
         });
     }
 
@@ -58,7 +62,12 @@ impl<'a> Editor<'a> {
         let mut event_pump = self.sdl_context.event_pump()?;
 
         'running: loop {
-            self.screen.colour(pixels::Color { r: 0, g: 0, b: 0, a: 0 });
+            self.screen.colour(pixels::Color {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0,
+            });
             self.screen.clear_screen();
             Self::manage_cursor(&mut time_since_cursor_change, &mut cursor_state, false);
             self.screen
