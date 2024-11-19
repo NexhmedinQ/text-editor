@@ -1,22 +1,92 @@
 use std::ptr;
 
-#[derive(PartialEq)]
-struct Node<T> {
-    elem: T,
-    next: *mut Node<T>,
-    prev: *mut Node<T>,
+#[derive(PartialEq, Copy, Clone)]
+pub struct Node<T> {
+    pub elem: T,
+    pub next: *mut Node<T>,
+    pub prev: *mut Node<T>,
 }
 
-pub struct List<T> {
+pub struct List<T> where T: Clone + Copy {
     head: *mut Node<T>,
     tail: *mut Node<T>,
 }
 
-impl<T> List<T> {
+impl<T> List<T> where T: Clone + Copy {
     pub fn new() -> Self {
         List {
             head: ptr::null_mut(),
             tail: ptr::null_mut(),
+        }
+    }
+
+    pub fn next(&self, cur: *mut Node<T>) -> Option<*mut Node<T>> {
+        unsafe {
+            if !cur.is_null() && !(*cur).next.is_null() {
+                return Some((*cur).next)
+            }
+            None
+        }
+    }
+
+    pub fn prev(&self, cur: *mut Node<T>) -> Option<*mut Node<T>> {
+        unsafe {
+            if !cur.is_null() && !(*cur).prev.is_null() {
+                return Some((*cur).prev)
+            }
+            None
+        }
+    }
+
+    pub fn head(&self) -> Option<*mut Node<T>> {
+        if !self.head.is_null() {
+            return Some(self.head)
+        }
+        None
+    }
+
+    pub fn tail(&self) -> Option<*mut Node<T>> {
+        if !self.tail.is_null() {
+            return Some(self.tail)
+        }
+        None
+    }
+
+    pub fn remove(&mut self, node: *mut Node<T>) -> bool {
+        unsafe {
+            if node.is_null() {
+                return false
+            }
+            if !(*node).prev.is_null() {
+                (*(*node).prev).next = (*node).next;
+            } else {
+                self.head = (*node).next;
+            }
+    
+            if !(*node).next.is_null() {
+                (*(*node).next).prev = (*node).prev;
+            } else {
+                self.tail = (*node).prev;
+            }
+            true
+        }
+    }
+
+    // this is absolutely horrendous but at least it'll be temporary
+    pub fn insert_node_after(&mut self, after: *mut Node<T>, new_node: *mut Node<T>) -> bool {
+        unsafe {
+            if after.is_null() || new_node.is_null() {
+                return false
+            }
+            (*new_node).next = (*after).next;
+            (*new_node).prev = after;
+            (*after).next = new_node;
+            if (*new_node).next.is_null() {
+                self.tail = new_node;
+            } else {
+                (*(*new_node).next).prev = new_node;
+            }
+            true
         }
     }
 
@@ -129,7 +199,7 @@ impl<T> List<T> {
     }
 }
 
-pub struct IntoIter<T>(List<T>);
+pub struct IntoIter<T: Copy + Clone>(List<T>);
 
 pub struct Iter<'a, T> {
     next: Option<&'a Node<T>>,
@@ -141,7 +211,7 @@ pub struct IterMut<'a, T> {
     next_back: Option<&'a mut Node<T>>,
 }
 
-impl<T> Iterator for IntoIter<T> {
+impl<T: Copy + Clone> Iterator for IntoIter<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -149,7 +219,7 @@ impl<T> Iterator for IntoIter<T> {
     }
 }
 
-impl<T> DoubleEndedIterator for IntoIter<T> {
+impl<T: Copy + Clone> DoubleEndedIterator for IntoIter<T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.pop_back()
     }
@@ -233,6 +303,10 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::ptr;
+
+    use crate::doubly_linked_list::Node;
+
     use super::List;
     #[test]
     fn basics_stack() {
@@ -353,5 +427,90 @@ mod test {
         assert_eq!(iter.next(), Some(2).as_mut());
         assert_eq!(iter.next(), None);
         assert_eq!(iter.next_back(), None);
+    }
+
+    #[test]
+    fn insert_after_middle_case() {
+        let mut list = List::new();
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        let head = list.head().unwrap();
+        let mut node  = Node {
+            elem: 4,
+            next: ptr::null_mut(),
+            prev: ptr::null_mut(),
+        };
+        list.insert_node_after(head, &mut node);
+        let mut iter = list.iter();
+        assert_eq!(iter.next(), Some(1).as_ref());
+        assert_eq!(iter.next(), Some(4).as_ref());
+        assert_eq!(iter.next(), Some(2).as_ref());
+    }
+
+    #[test]
+    fn insert_after_edge_case() {
+        let mut list = List::new();
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        let tail = list.tail().unwrap();
+        let mut node  = Node {
+            elem: 4,
+            next: ptr::null_mut(),
+            prev: ptr::null_mut(),
+        };
+        list.insert_node_after(tail, &mut node);
+        let mut iter = list.iter();
+        assert_eq!(iter.next(), Some(1).as_ref());
+        assert_eq!(iter.next(), Some(2).as_ref());
+        assert_eq!(iter.next(), Some(3).as_ref());
+        assert_eq!(iter.next(), Some(4).as_ref());
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn remove_from_front() {
+        let mut list = List::new();
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        let head = list.head().unwrap();
+        list.remove(head);
+
+        let mut iter = list.iter();
+        assert_eq!(iter.next(), Some(2).as_ref());
+        assert_eq!(iter.next(), Some(3).as_ref());
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn remove_from_back() {
+        let mut list = List::new();
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        let tail = list.tail().unwrap();
+        list.remove(tail);
+
+        let mut iter = list.iter();
+        assert_eq!(iter.next(), Some(1).as_ref());
+        assert_eq!(iter.next(), Some(2).as_ref());
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn remove_from_middle() {
+        let mut list = List::new();
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        let tail = list.tail().unwrap();
+        list.remove((unsafe { *tail }).prev);
+
+        let mut iter = list.iter();
+        assert_eq!(iter.next(), Some(1).as_ref());
+        assert_eq!(iter.next(), Some(3).as_ref());
+        assert_eq!(iter.next(), None);
     }
 }

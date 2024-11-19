@@ -79,6 +79,9 @@ impl<'a> Editor<'a> {
                 .filter_map(Keycode::from_scancode)
                 .any(|key| key == Keycode::LCTRL || key == Keycode::RCTRL);
 
+            // batched insert will be added on cursor move event or whitespace event
+            let mut batched_insert = String::from("");
+
             for event in event_pump.poll_iter() {
                 if ctrl_pressed {
                     if let Event::KeyDown { keycode, .. } = event {
@@ -98,8 +101,16 @@ impl<'a> Editor<'a> {
                             if let Some(key) = keycode {
                                 match key {
                                     Keycode::BACKSPACE => println!("Backspace"),
-                                    Keycode::TAB => println!("TAB"),
-                                    Keycode::RETURN => println!("Return"),
+                                    Keycode::SPACE | Keycode::TAB | Keycode::RETURN => {
+                                        if !batched_insert.is_empty() {
+                                            let (line, index) =
+                                                self.screen.get_cursor_line_position();
+                                            self.text_buffer.insert(line - 1, index, &batched_insert);
+                                            batched_insert = String::from(" ");
+                                            // cursor at index 0 would be inserting before index 0??
+                                        }
+                                        println!("Whitespace")
+                                    }
                                     Keycode::UP
                                     | Keycode::DOWN
                                     | Keycode::LEFT
@@ -110,7 +121,14 @@ impl<'a> Editor<'a> {
                                             &mut cursor_state,
                                             true,
                                         );
+                                        if !batched_insert.is_empty() {
+                                            let (line, index) =
+                                                self.screen.get_cursor_line_position();
+                                            self.text_buffer.insert(line - 1, index, &batched_insert);
+                                            batched_insert = String::from("");
+                                        }
                                     }
+                                    _ if key.into_i32() >= 33 && key.into_i32() < 127 => {}
                                     _ => println!("Other keycode"),
                                 }
                             }
@@ -159,3 +177,8 @@ impl<'a> Editor<'a> {
         }
     }
 }
+
+// we have to create a new span whenever a cursor gets moved or theres whitespace added
+
+// screen moves when undoing or redoing??
+// might need to implement some sort of observer pattern so that the window can move depending on where the cursor is??

@@ -190,4 +190,8 @@ impl Screen {
                 self.line_buf[self.cursor.cursor_pos.y as usize].len() as u32;
         }
     }
+
+    pub fn get_cursor_line_position(&self) -> (u32, u32) {
+        (self.cursor.line_num, self.cursor.cursor_pos.y)
+    }
 }
